@@ -67,8 +67,15 @@ Play Console, optionally Microsoft Partner Center. Bundle / package ID:
   `APPLE_SIGNING_IDENTITY`, `APPLE_ID`, `APPLE_PASSWORD`, `APPLE_TEAM_ID` as
   secrets for a signed, notarized Mac build.
 
-CI needs the secret `ARTOLOGY_READ_TOKEN` (read access to artology) to
-check out the submodule.
+### CI
+
+- CI needs the secret `ARTOLOGY_READ_TOKEN`: a fine-grained token with
+  **Contents: read on antoinetterocks/artology only**. Without it the build
+  jobs are skipped with a notice instead of failing.
+- Built files are uploaded as workflow artifacts **only while this repository
+  is private**, because anyone can download a public repository's artifacts.
+  Make the repo private before adding the token if you want downloadable test
+  builds.
 
 Keep versions in step: `src-tauri/tauri.conf.json`, Xcode Marketing Version,
 Android `versionName` in `android/app/build.gradle`.

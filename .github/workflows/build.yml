@@ -4,8 +4,14 @@ name: build
 # pinned to the commit recorded in this repo.
 #
 # artology is private, so checking out the submodule needs a token that can
-# read it: add a fine-grained personal access token (Contents: read on
-# antoinetterocks/artology) as the repository secret ARTOLOGY_READ_TOKEN.
+# read it: a fine-grained personal access token with Contents: read on
+# antoinetterocks/artology ONLY, saved as the repository secret
+# ARTOLOGY_READ_TOKEN. Until it exists the build jobs are skipped (not red).
+# Checkout never persists the token in the workspace.
+#
+# Built files (web bundle, APK, installers) are uploaded as workflow
+# artifacts only while this repository is private — anyone can download the
+# artifacts of a public repository.
 #
 # - every PR / push: web build + Android debug APK;
 # - macOS (.dmg) + Windows (.msi / .exe) when run by hand or on a v* tag.
@@ -18,20 +24,42 @@ on:
     tags: ["v*"]
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
+  preflight:
+    runs-on: ubuntu-latest
+    outputs:
+      has_token: ${{ steps.check.outputs.has_token }}
+    steps:
+      - id: check
+        env:
+          TOKEN: ${{ secrets.ARTOLOGY_READ_TOKEN }}
+        run: |
+          if [ -n "$TOKEN" ]; then echo "has_token=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_token=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::ARTOLOGY_READ_TOKEN is not set, so the artology submodule can't be checked out. Builds skipped."
+          fi
+
   web-and-android:
+    needs: preflight
+    if: needs.preflight.outputs.has_token == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
-          token: ${{ secrets.ARTOLOGY_READ_TOKEN || github.token }}
+          token: ${{ secrets.ARTOLOGY_READ_TOKEN }}
+          persist-credentials: false
       - uses: actions/setup-node@v4
         with:
           node-version: 20
       - run: npm ci
       - run: npm run web:build
-      - uses: actions/upload-artifact@v4
+      - if: github.event.repository.private
+        uses: actions/upload-artifact@v4
         with:
           name: crm-web
           path: dist
@@ -43,13 +71,15 @@ jobs:
       - name: Android debug APK
         working-directory: android
         run: ./gradlew assembleDebug
-      - uses: actions/upload-artifact@v4
+      - if: github.event.repository.private
+        uses: actions/upload-artifact@v4
         with:
           name: crm-android-debug
           path: android/app/build/outputs/apk/debug/*.apk
 
   desktop:
-    if: github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/v')
+    needs: preflight
+    if: needs.preflight.outputs.has_token == 'true' && (github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/v'))
     strategy:
       fail-fast: false
       matrix:
@@ -63,7 +93,8 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
-          token: ${{ secrets.ARTOLOGY_READ_TOKEN || github.token }}
+          token: ${{ secrets.ARTOLOGY_READ_TOKEN }}
+          persist-credentials: false
       - uses: actions/setup-node@v4
         with:
           node-version: 20
@@ -77,7 +108,6 @@ jobs:
       # Unsigned unless the Apple signing secrets are set (see README).
       - uses: tauri-apps/tauri-action@v0
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
           APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
           APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
@@ -86,7 +116,8 @@ jobs:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         with:
           args: ${{ matrix.args }}
-      - uses: actions/upload-artifact@v4
+      - if: github.event.repository.private
+        uses: actions/upload-artifact@v4
         with:
           name: crm-desktop-${{ matrix.os }}
           path: |
