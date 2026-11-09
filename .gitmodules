@@ -1,0 +1,4 @@
+[submodule "artology"]
+	path = artology
+	url = https://github.com/antoinetterocks/artology.git
+	branch = main

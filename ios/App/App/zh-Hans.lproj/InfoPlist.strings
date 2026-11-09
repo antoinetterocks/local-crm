@@ -1,0 +1,4 @@
+"CFBundleDisplayName" = "Artology 人脉管理";
+"NSCameraUsageDescription" = "Artology 人脉管理需要使用相机拍摄名片和联系人照片。";
+"NSMicrophoneUsageDescription" = "Artology 人脉管理在你口述笔记时需要使用麦克风。";
+"NSPhotoLibraryUsageDescription" = "Artology 人脉管理需要访问你的相册，以便为联系人添加照片。";

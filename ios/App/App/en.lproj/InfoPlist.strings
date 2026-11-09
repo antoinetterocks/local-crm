@@ -1,0 +1,4 @@
+"CFBundleDisplayName" = "Artology CRM";
+"NSCameraUsageDescription" = "Artology CRM uses the camera to photograph business cards and contact images.";
+"NSMicrophoneUsageDescription" = "Artology CRM uses the microphone when you dictate notes.";
+"NSPhotoLibraryUsageDescription" = "Artology CRM lets you attach photos from your library to contacts.";

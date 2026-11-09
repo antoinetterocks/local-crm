@@ -1,0 +1,29 @@
+{
+  "name": "local-crm",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Artology CRM native apps (iOS, Android, macOS, Windows). The app code lives in the artology submodule.",
+  "scripts": {
+    "web:build": "bash scripts/web-build.sh",
+    "web:dev": "npm --prefix artology run dev:crm",
+    "cap:sync": "npm run web:build && cap sync",
+    "ios": "npm run cap:sync && cap open ios",
+    "android": "npm run cap:sync && cap open android",
+    "desktop:dev": "tauri dev",
+    "desktop:build": "tauri build",
+    "update-artology": "git submodule update --remote artology && git add artology"
+  },
+  "dependencies": {
+    "@capacitor/android": "^7.6.10",
+    "@capacitor/core": "^7.6.10",
+    "@capacitor/ios": "^7.6.10",
+    "@capacitor/status-bar": "^7.0.6"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^7.6.10",
+    "@tauri-apps/cli": "^2"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
